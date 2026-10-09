@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>CET-6 备考计划</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:#0f172a;color:#e2e8f0;font:16px/1.6 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;padding:16px 14px calc(40px + env(safe-area-inset-bottom))}
+.wrap{max-width:720px;margin:0 auto}
+.card{background:#1e293b;border:1px solid #334155;border-radius:14px;padding:14px;margin-bottom:12px}
+h2{font-size:15px;margin:22px 0 10px;color:#94a3b8;font-weight:600}
+.hero{text-align:center}
+.dday{font-size:46px;font-weight:800;color:#2DD4BF;letter-spacing:-1px;line-height:1.1}
+.bar{height:8px;background:#334155;border-radius:99px;overflow:hidden;margin-top:10px}
+.bar>i{display:block;height:100%;background:#2DD4BF;border-radius:99px;transition:width .3s}
+.phase{border-left:4px solid #475569}
+.phase.cur{border-left-color:#2DD4BF;background:#1b2b40}
+.phase.done{opacity:.5}
+.ph{display:flex;justify-content:space-between;align-items:center;gap:8px;font-weight:700}
+.tag{font-size:12px;padding:2px 8px;border-radius:99px;background:#334155;color:#cbd5e1;white-space:nowrap}
+.tag.cur{background:#2DD4BF;color:#0f172a}
+.muted{color:#64748b;font-size:12px;margin:4px 0}
+label.task{display:flex;align-items:flex-start;gap:10px;min-height:44px;padding:8px 2px;cursor:pointer}
+label.task input{width:20px;height:20px;margin:2px 0 0;flex:0 0 auto;accent-color:#2DD4BF}
+label.task span{font-size:14px}
+label.task.on span{text-decoration:line-through;color:#64748b}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:12px}
+table{border-collapse:collapse;width:100%;min-width:520px;font-size:14px;background:#1e293b}
+th,td{border:1px solid #334155;padding:8px;text-align:left;vertical-align:top}
+th{color:#94a3b8;font-weight:600}
+.row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid #334155;font-size:14px}
+.row:last-child{border:0}
+.hv{color:#2DD4BF;font-weight:700}
+button{min-height:44px;padding:0 16px;border-radius:10px;border:0;background:#2DD4BF;color:#0f172a;font-weight:700;font-size:14px;margin:6px 8px 0 0}
+button.ghost{background:#334155;color:#e2e8f0}
+textarea{width:100%;min-height:80px;background:#0f172a;color:#cbd5e1;border:1px solid #334155;border-radius:10px;padding:10px;font:12px/1.5 ui-monospace,monospace;margin:8px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div id="hero"></div>
+  <h2>今日焦点</h2>
+  <div id="focus"></div>
+  <h2>阶段时间轴</h2>
+  <div id="phases"></div>
+  <h2>每周节奏</h2>
+  <div class="scroll"><table id="weekly"></table></div>
+  <h2>分值拆解</h2>
+  <div id="scores"></div>
+  <h2>数据备份</h2>
+  <div id="backup" class="card"></div>
+  <p class="muted">打卡记录保存在本机浏览器中。换手机或清理缓存前，请先在上面导出备份。</p>
+</div>
+<script>
+const KEY='cet6-plan-v1';
+const SCHEDULE={
+ "examDate":"2026-12-19",
+ "examDateNote":"预计2026年12月中旬，以教育部考试院官方通知为准",
+ "targetScore":430,"passScore":425,
+ "scoreBreakdown":[{"part":"听力","score":248.5},{"part":"阅读","score":248.5},{"part":"写作+翻译","score":212}],
+ "highValuePoints":[{"item":"仔细阅读 10题","score":142},{"item":"听力讲座/讲话 10题","score":142}],
+ "phases":[
+  {"id":"p1","name":"① 基础期","start":"2026-10-09","end":"2026-10-25","days":17,
+   "goal":"核心词1800个 + 听力精听入门 + 长难句拆解","check":"词汇过完1遍；慢速长对话能听懂70%",
+   "tasks":[{"id":"p1-t1","text":"核心词 80个/天（50新+30复习，滚动复习）"},{"id":"p1-t2","text":"听力精听1篇：盲听做题 → 逐句对照原文 → 跟读"},{"id":"p1-t3","text":"长难句拆解 5 句（找主干+划从句）"},{"id":"p1-t4","text":"周日抽查本周词汇 200 个，错的抄进错词本"}]},
+  {"id":"p2","name":"② 强化期","start":"2026-10-26","end":"2026-11-22","days":28,
+   "goal":"按题型专项突破，近5年真题拆开刷","check":"听力正确率≥60%，阅读正确率≥65%",
+   "tasks":[{"id":"p2-t1","text":"仔细阅读 2篇/天，每篇限时12分钟"},{"id":"p2-t2","text":"听力讲座专项1篇：精听+记笔记（人称、数字、转折）"},{"id":"p2-t3","text":"周二 写作1篇：先背3个模板句，再仿写"},{"id":"p2-t4","text":"周四 翻译1篇：先自己直译，再对照答案改"},{"id":"p2-t5","text":"周三/周五 选词填空+长篇阅读各1篇"},{"id":"p2-t6","text":"周六 单项限时训练（计时，做完才看答案）"},{"id":"p2-t7","text":"周日 复盘3小时：所有错题写清错因"}]},
+  {"id":"p3","name":"③ 冲刺期","start":"2026-11-23","end":"2026-12-12","days":20,
+   "goal":"整套真题限时模考，把分数稳定在及格线以上","check":"连续3次模考稳定 ≥420 分",
+   "tasks":[{"id":"p3-t1","text":"每周2套完整真题限时模考（按真实考试时间段）"},{"id":"p3-t2","text":"模考后当天完成错题重做，先重做再看解析"},{"id":"p3-t3","text":"作文限时25分钟写完，控制在200词左右"},{"id":"p3-t4","text":"翻译限时25分钟，重点练中国文化/科技类话题"},{"id":"p3-t5","text":"整理高频词+听力同义替换，每天过20个"}]},
+  {"id":"p4","name":"④ 保温期","start":"2026-12-13","end":"2026-12-18","days":6,
+   "goal":"不学新东西，只把会的固定住，调好生物钟","check":"作文能25分钟完整默写；错题全部重做过",
+   "tasks":[{"id":"p4-t1","text":"错题本全部重做一遍（只做错过的题）"},{"id":"p4-t2","text":"默写作文模板1篇，掐表25分钟"},{"id":"p4-t3","text":"调作息：上午9:00-11:25 必须清醒且在用脑"},{"id":"p4-t4","text":"考前最后2天：只看错题和熟词，绝不碰新词"}]}
+ ],
+ "weekly":[
+  {"day":"周一","items":["词汇 30min","听力 30min","仔细阅读 2篇（限时）"]},
+  {"day":"周二","items":["词汇 30min","听力 30min","写作 1篇"]},
+  {"day":"周三","items":["词汇 30min","听力 30min","长篇阅读 / 选词填空"]},
+  {"day":"周四","items":["词汇 30min","听力 30min","翻译 1篇"]},
+  {"day":"周五","items":["词汇 30min","听力 30min","仔细阅读 2篇（限时）"]},
+  {"day":"周六","items":["词汇 30min","单项限时训练","错题本整理"]},
+  {"day":"周日","items":["模考（整卷或半卷）","复盘（时长不少于考试时长）"]}
+ ]
+};
+var state={checked:{}};
+try{var raw=localStorage.getItem(KEY);if(raw){var p=JSON.parse(raw);if(p&&p.checked)state=p;}}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
+function pd(s){var a=s.split('-');return new Date(+a[0],+a[1]-1,+a[2]);}
+function t0(){var n=new Date();return new Date(n.getFullYear(),n.getMonth(),n.getDate());}
+var DAY=86400000,today=t0(),exam=pd(SCHEDULE.examDate);
+var left=Math.round((exam-today)/DAY);
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');}
+function phaseOf(t){for(var i=0;i<SCHEDULE.phases.length;i++){var p=SCHEDULE.phases[i];if(t>=pd(p.start)&&t<=pd(p.end))return p;}return null;}
+var cur=phaseOf(today);
+var allTasks=[];SCHEDULE.phases.forEach(function(p){p.tasks.forEach(function(t){allTasks.push(t.id);});});
+function doneIn(p){var n=0;p.tasks.forEach(function(t){if(state.checked[t.id])n++;});return n;}
+var doneAll=allTasks.filter(function(id){return state.checked[id];}).length;
+var pct=Math.round(doneAll/allTasks.length*100);
+
+document.getElementById('hero').innerHTML='<div class="card hero">'
+ +'<div class="dday">'+(left>0?'D-'+left:(left===0?'就是今天！':'已考完'))+'</div>'
+ +'<div class="muted">'+SCHEDULE.examDate+' · 目标 '+SCHEDULE.targetScore+' 分 · 及格 '+SCHEDULE.passScore+' 分</div>'
+ +'<div class="bar"><i style="width:'+pct+'%"></i></div>'
+ +'<div class="muted">总任务完成 '+doneAll+'/'+allTasks.length+'（'+pct+'%）</div>'
+ +'<div class="muted">'+SCHEDULE.examDateNote+'</div></div>';
+
+function taskHTML(t){
+ var on=state.checked[t.id]?' on':'';
+ return '<label class="task'+on+'"><input type="checkbox" data-id="'+t.id+'"'+(state.checked[t.id]?' checked':'')+'>'
+  +'<span>'+esc(t.text)+'</span></label>';
+}
+function cardHTML(p,extra){
+ var cls='card phase'+(p===cur?' cur':(today>pd(p.end)?' done':''));
+ var tag=p===cur?'<span class="tag cur">进行中</span>':(today>pd(p.end)?'<span class="tag">已完成</span>':'<span class="tag">未开始</span>');
+ return '<div class="'+cls+'"><div class="ph"><span>'+esc(p.name)+'</span><span style="display:flex;gap:6px;align-items:center">'
+  +tag+'<span class="tag">'+doneIn(p)+'/'+p.tasks.length+'</span></span></div>'
+  +'<div class="muted">'+p.start+' ~ '+p.end+'（'+p.days+'天）</div>'
+  +'<div class="muted">目标：'+esc(p.goal)+'</div>'
+  +'<div class="muted">验收：'+esc(p.check)+'</div>'
+  +p.tasks.map(taskHTML).join('')+(extra||'')+'</div>';
+}
+
+var focusEl=document.getElementById('focus');
+if(cur){
+ focusEl.innerHTML=cardHTML(cur,'<div class="muted">👆 今天就从这几条开始</div>');
+}else{
+ var nxt=null;SCHEDULE.phases.forEach(function(p){if(!nxt&&today<pd(p.start))nxt=p;});
+ if(today<pd(SCHEDULE.phases[0].start)){
+  focusEl.innerHTML='<div class="card"><div class="ph">还没到开始时间</div><div class="muted">计划从 '+SCHEDULE.phases[0].start+' 开始</div>'+SCHEDULE.phases[0].tasks.map(taskHTML).join('')+'</div>';
+ }else if(nxt){
+  focusEl.innerHTML=cardHTML(nxt,'<div class="muted">阶段间空档，提前看看下一阶段</div>');
+ }else{
+  focusEl.innerHTML='<div class="card"><div class="ph">计划全部结束</div><div class="muted">保持手感，看错题本即可 💪</div></div>';
+ }
+}
+
+document.getElementById('phases').innerHTML=SCHEDULE.phases.map(function(p){return cardHTML(p);}).join('');
+
+document.getElementById('weekly').innerHTML='<tr><th style="width:80px">星期</th><th>任务</th></tr>'
+ +SCHEDULE.weekly.map(function(d){return '<tr><td>'+esc(d.day)+'</td><td>'+d.items.map(esc).join('<br>')+'</td></tr>';}).join('');
+
+document.getElementById('scores').innerHTML='<div class="card">'
+ +SCHEDULE.scoreBreakdown.map(function(s){return '<div class="row"><span>'+esc(s.part)+'</span><span>'+s.score+' 分</span></div>';}).join('')
+ +'<div class="muted" style="margin-top:10px">高性价比优先项（两块共 '+SCHEDULE.highValuePoints.reduce(function(a,b){return a+b.score;},0)+' 分）：</div>'
+ +SCHEDULE.highValuePoints.map(function(h){return '<div class="row"><span>'+esc(h.item)+'</span><span class="hv">'+h.score+' 分</span></div>';}).join('')
+ +'</div>';
+
+var b=document.getElementById('backup');
+b.innerHTML='<div class="muted">把下面这段文字复制到微信收藏或备忘录，就是你的打卡备份。</div>'
+ +'<textarea id="ta" spellcheck="false"></textarea>'
+ +'<button id="exp">导出备份</button><button id="imp" class="ghost">导入备份</button>'
+ +'<button id="clr" class="ghost">清空打卡</button>';
+document.getElementById('exp').onclick=function(){var ta=document.getElementById('ta');ta.value=JSON.stringify(state);ta.select();try{document.execCommand('copy');}catch(e){}alert('已生成并尝试复制，请自行保存这段文字。');};
+document.getElementById('imp').onclick=function(){var v=document.getElementById('ta').value.trim();if(!v){alert('请先把备份文字粘贴到上面框里');return;}try{var o=JSON.parse(v);if(!o||!(o.checked))throw 0;state=o;save();render();alert('导入成功');}catch(e){alert('这段文字格式不对，请检查是否复制完整');}};
+document.getElementById('clr').onclick=function(){if(confirm('确定清空所有打卡记录？')){state={checked:{}};save();render();}};
+
+function render(){location.reload();}
+document.addEventListener('change',function(e){
+ var t=e.target;
+ if(t&&t.tagName==='INPUT'&&t.type==='checkbox'&&t.getAttribute('data-id')){
+  var id=t.getAttribute('data-id');
+  if(t.checked){state.checked[id]=true;}else{delete state.checked[id];}
+  save();
+  var lab=t.closest('label');
+  if(lab){lab.classList.toggle('on',t.checked);}
+  var p=null;SCHEDULE.phases.forEach(function(q){q.tasks.forEach(function(k){if(k.id===id)p=q;});});
+  if(p){var tags=p.tasks.length;var n=doneIn(p);
+   var el=document.querySelectorAll('.phase .tag');
+   document.querySelectorAll('.tag').forEach(function(x){
+    if(x.parentNode&&x.parentNode.parentNode&&x.parentNode.parentNode.textContent.indexOf(p.name)===0){}
+   });
+  }
+  updateHero();
+ }
+});
+function updateHero(){var d=allTasks.filter(function(id){return state.checked[id];}).length;var pc=Math.round(d/allTasks.length*100);
+ var bar=document.querySelector('#hero .bar>i'); if(bar)bar.style.width=pc+'%';
+ var m=document.querySelectorAll('#hero .muted'); if(m[1])m[1].textContent='总任务完成 '+d+'/'+allTasks.length+'（'+pc+'%）';}
+updateHero();
+</script>
+</body>
+</html>
